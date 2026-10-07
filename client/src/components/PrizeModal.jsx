@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import VoucherCard from './VoucherCard.jsx';
 
 export default function PrizeModal({ site, mobile, result, onClaim, onSpinAgain, onClose }) {
@@ -11,7 +12,8 @@ export default function PrizeModal({ site, mobile, result, onClaim, onSpinAgain,
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  return (
+  // Rendered on <body> so no stacking context on the page (e.g. the T&C section) can cover it
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className={`modal ${result.isWin ? 'modal-win' : 'modal-retry'}`}
@@ -35,6 +37,7 @@ export default function PrizeModal({ site, mobile, result, onClaim, onSpinAgain,
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
