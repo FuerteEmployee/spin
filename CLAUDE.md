@@ -21,17 +21,23 @@ cd client && npm run build                # then http://localhost:5000 serves si
 
 On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.8,1.1.1.1` in `server/.env` (applied in [db.js](server/src/config/db.js)).
 
-## Deployment (Hostinger Node.js app, https://sadguruselection.com)
+## Deployment (Hostinger)
 
-- **One Node app serves everything**: the site at `/`, `/admin` and the API at `/api`, same origin. It deploys from GitHub `main` using the root [package.json](package.json):
-  - `postinstall` installs `server/` and then runs `build` (the Hostinger app's build command is fixed at `npm run postinstall` and can't be changed in hPanel);
-  - `build` installs and builds `client/` (`--include=dev`, because `NODE_ENV=production` would otherwise skip Vite);
-  - `start` runs `server/src/index.js`, which serves `client/dist`.
+- **Website:** https://sadguruselection.com, a separate Hostinger website with static files in its `public_html`.
+  - Build it with `npm run build:sadguru`, which uses `client/.env.sadguru`: `VITE_API_URL` points at the API, and phone test mode is off. The Firebase keys come from your local `client/.env`.
+  - `client/public/.htaccess` sends unknown paths (such as `/admin`) to `index.html`.
+  - Every website change means rebuilding, then uploading `deploy-upload/sadguruselection-website.zip` by hand.
+- **API:** a Hostinger Node.js app at https://spin-api.fuertedevelopers.com, deployed from GitHub `main` through the root [package.json](package.json):
+  - `postinstall` installs `server/`, then runs `build`. The app's build command is fixed at `npm run postinstall` in hPanel.
+  - `build` builds `client/` too, so this domain also serves a copy of the site. `--include=dev` is needed because `NODE_ENV=production` would otherwise skip Vite.
+  - `start` runs `server/src/index.js`.
 
-  **Pushing to `main` and redeploying updates both the site and the API.**
-- `client/.env.production` is committed: it holds the public Firebase web config and turns phone test mode off for the live build. Locally, a gitignored `client/.env.production.local` turns test mode back on for localhost.
-- Same origin means `VITE_API_URL` and `PUBLIC_URL` must stay unset in production. `CLIENT_ORIGIN` is just the site's own origins.
-- **Legacy:** the site was briefly static at fuertedevelopers.com/spinandwin, with the API at spin-api.fuertedevelopers.com (`npm run build:hostinger`, `client/.env.hostinger`). That folder now only holds a 301 redirect `.htaccess` to sadguruselection.com, for already-printed QR codes.
+  Push to `main` and redeploy to update the API.
+- **Cross-origin settings:** because the site and API are on different domains, the API needs two production env vars:
+  - `CLIENT_ORIGIN` must list `https://sadguruselection.com` and `https://www.sadguruselection.com`;
+  - `PUBLIC_URL=https://spin-api.fuertedevelopers.com`, so `/api/media` image links are absolute.
+- **Firebase config:** `client/.env.production` (committed) holds the public Firebase web config for the Node app's own build. A gitignored `client/.env.production.local` turns phone test mode back on for localhost.
+- **Legacy:** fuertedevelopers.com/spinandwin (`npm run build:hostinger`) now only holds a 301 redirect `.htaccess` to sadguruselection.com, so already-printed QR codes still work.
 - `deploy-upload/` (gitignored) holds hand-made upload packages and `hostinger-env.txt` (secrets). Make zips with Windows `tar -a`, not PowerShell 5.1 `Compress-Archive`, whose backslash paths break on Linux.
 
 ## Configuration
