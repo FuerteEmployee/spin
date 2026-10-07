@@ -1,9 +1,9 @@
 {
   "name": "spinwin",
   "private": true,
-  "description": "Root entry for the Hostinger Node.js app (deployed from Git): builds the website in client/ and runs the API in server/, which also serves the built site.",
+  "description": "Root entry for the Hostinger Node.js app (deployed from Git). Installing at the root installs server/ and builds the website in client/; start runs the API, which also serves the built site.",
   "scripts": {
-    "postinstall": "npm ci --prefix server --omit=dev",
+    "postinstall": "npm ci --prefix server --omit=dev && npm run build",
     "build": "npm ci --prefix client --include=dev && npm run build --prefix client",
     "start": "node server/src/index.js"
   },
