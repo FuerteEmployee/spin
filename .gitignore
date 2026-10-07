@@ -4,3 +4,4 @@ dist
 *.env
 atlas-credentials*
 deploy-upload/
+*.local
