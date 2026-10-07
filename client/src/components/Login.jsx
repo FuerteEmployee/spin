@@ -1,9 +1,14 @@
-import { useEffect, useState } from 'react';
-import { BRAND_NAME } from '../config.js';
-import { isValidMobile, sendOtp, verifyOtp } from '../services/spinService.js';
+import { useEffect, useRef, useState } from 'react';
+import { confirmFirebaseOtp, RECAPTCHA_CONTAINER_ID, resetRecaptcha, sendFirebaseOtp, trackEvent } from '../firebase.js';
+import { isValidMobile, loginWithFirebase, sendOtp, verifyOtp } from '../services/spinService.js';
 import OtpInput from './OtpInput.jsx';
 
-export default function Login({ onLogin }) {
+const FIREBASE_RESEND_SECONDS = 30;
+
+// site.otpMode: "firebase" sends a real SMS through Firebase Phone Auth;
+// "screen" uses the server's OTP, shown on screen (no SMS provider).
+export default function Login({ site, onLogin }) {
+  const useFirebase = site.otpMode === 'firebase';
   const [step, setStep] = useState('mobile');
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
@@ -11,12 +16,39 @@ export default function Login({ onLogin }) {
   const [resendIn, setResendIn] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const confirmation = useRef(null);
 
   useEffect(() => {
     if (resendIn <= 0) return;
     const timer = setTimeout(() => setResendIn((s) => s - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendIn]);
+
+  // The invisible reCAPTCHA is bound to this page's container element
+  useEffect(() => resetRecaptcha, []);
+
+  async function requestFirebaseOtp() {
+    confirmation.current = await sendFirebaseOtp(mobile);
+    setShownOtp('');
+    setOtp('');
+    setResendIn(FIREBASE_RESEND_SECONDS);
+    setStep('otp');
+  }
+
+  async function requestScreenOtp() {
+    const data = await sendOtp(mobile);
+    setShownOtp(data.otp || '');
+    setOtp('');
+    setResendIn(data.resendIn);
+    setStep('otp');
+  }
+
+  async function verify(code) {
+    if (!useFirebase) return verifyOtp(mobile, code);
+    if (!confirmation.current) throw new Error('OTP expired, please request a new one');
+    const idToken = await confirmFirebaseOtp(confirmation.current, code);
+    return loginWithFirebase(idToken);
+  }
 
   async function requestOtp(event) {
     event?.preventDefault();
@@ -27,11 +59,7 @@ export default function Login({ onLogin }) {
     }
     setLoading(true);
     try {
-      const data = await sendOtp(mobile);
-      setShownOtp(data.otp);
-      setOtp('');
-      setResendIn(data.resendIn);
-      setStep('otp');
+      await (useFirebase ? requestFirebaseOtp() : requestScreenOtp());
     } catch (err) {
       setError(err.message);
       if (err.data?.retryAfter) setResendIn(err.data.retryAfter);
@@ -48,7 +76,9 @@ export default function Login({ onLogin }) {
     }
     setLoading(true);
     try {
-      onLogin(await verifyOtp(mobile, code));
+      const session = await verify(code);
+      trackEvent('login', { method: useFirebase ? 'firebase_phone' : 'screen_otp' });
+      onLogin(session);
     } catch (err) {
       setError(err.message);
       setOtp('');
@@ -66,15 +96,26 @@ export default function Login({ onLogin }) {
   return (
     <main className="login">
       <div className="login-hero">
-        <div className="login-badge" aria-hidden="true">🎡</div>
-        <h1>{BRAND_NAME}</h1>
-        <p>Spin the wheel and win exciting rewards — up to <strong>6 months free!</strong></p>
+        {site.images.logo ? (
+          <img className="login-logo" src={site.images.logo} alt={site.brandName} />
+        ) : (
+          <div className="login-badge" aria-hidden="true">🎡</div>
+        )}
+        <p className="login-brand">{site.brandName}</p>
+        <h1>{site.headline}</h1>
+        {site.subheadline && <p>{site.subheadline}</p>}
       </div>
+
+      {!site.campaignActive && (
+        <p className="notice" role="status">
+          {site.closedMessage} Already won? Log in to see your voucher.
+        </p>
+      )}
 
       <section className="card">
         {step === 'mobile' ? (
           <form onSubmit={requestOtp} noValidate>
-            <h2>Login to spin</h2>
+            <h2>{site.campaignActive ? 'Login to spin' : 'Login'}</h2>
             <p className="muted">Enter your mobile number to get an OTP</p>
 
             <label className="field-label" htmlFor="mobile">Mobile number</label>
@@ -144,8 +185,7 @@ export default function Login({ onLogin }) {
           </form>
         )}
       </section>
-
-      <p className="fineprint">T&amp;C apply.</p>
+      {useFirebase && <div id={RECAPTCHA_CONTAINER_ID} />}
     </main>
   );
 }

@@ -1,22 +1,24 @@
-import { BRAND_NAME, WHATSAPP_NUMBER } from './config.js';
+// Placeholders the admin can use in the WhatsApp message
+export const MESSAGE_PLACEHOLDERS = ['{brand}', '{reward}', '{description}', '{code}', '{mobile}', '{date}'];
 
-export function buildWhatsAppLink(mobile, spin) {
-  const wonOn = new Date(spin.wonAt).toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+// "self" sends the voucher to the customer's own WhatsApp chat, "business" to the store's number
+export function claimNumber(site, mobile) {
+  return site.claimTarget === 'business' && site.businessWhatsapp ? site.businessWhatsapp : `91${mobile}`;
+}
 
-  const message = [
-    `Hi! 🎉 I just won a reward on ${BRAND_NAME}.`,
-    '',
-    `🎁 Reward: ${spin.label}`,
-    `🎟️ Coupon Code: ${spin.couponCode}`,
-    `📱 Mobile: +91 ${mobile}`,
-    `📅 Won on: ${wonOn}`,
-    '',
-    'Please help me claim my reward.',
-  ].join('\n');
+export function buildWhatsAppMessage(site, mobile, spin) {
+  const values = {
+    brand: site.brandName,
+    reward: spin.label,
+    description: spin.description || '',
+    code: spin.couponCode || '',
+    mobile,
+    date: new Date(spin.wonAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+  };
+  return site.whatsappMessage.replace(/\{(\w+)\}/g, (match, key) => (key in values ? values[key] : match));
+}
 
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+export function buildWhatsAppLink(site, mobile, spin) {
+  const message = buildWhatsAppMessage(site, mobile, spin);
+  return `https://wa.me/${claimNumber(site, mobile)}?text=${encodeURIComponent(message)}`;
 }

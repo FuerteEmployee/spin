@@ -3,16 +3,38 @@ import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 import Otp from '../models/Otp.js';
 import User from '../models/User.js';
+import { firebaseAuth } from '../utils/firebase.js';
 import { generateOtp, hashOtp, safeEqual } from '../utils/random.js';
+import { rateLimit } from '../utils/rateLimit.js';
 
 const router = Router();
 const MOBILE_REGEX = /^\d{10}$/;
+
+// Per IP, on top of the per-number resend cooldown
+const otpLimiter = rateLimit({ windowMs: 10 * 60 * 1000, max: 30, message: 'Too many OTP requests, please try again later' });
 
 function normalizeMobile(value) {
   return String(value || '').replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
 }
 
-router.post('/send-otp', async (req, res, next) => {
+async function createSession(mobile) {
+  const user = await User.findOneAndUpdate(
+    { mobile },
+    { $set: { lastLoginAt: new Date() } },
+    { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
+  );
+  const token = jwt.sign({ sub: user.id, mobile, role: 'user' }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  return { token, user: { id: user.id, mobile } };
+}
+
+// The server's own OTP routes are switched off in Firebase mode, so the on-screen OTP
+// can't be used to get around real SMS verification
+function requireScreenOtp(req, res, next) {
+  if (config.otpMode === 'firebase') return res.status(404).json({ message: 'Not found' });
+  next();
+}
+
+router.post('/send-otp', requireScreenOtp, otpLimiter, async (req, res, next) => {
   try {
     const mobile = normalizeMobile(req.body.mobile);
     if (!MOBILE_REGEX.test(mobile)) {
@@ -49,7 +71,7 @@ router.post('/send-otp', async (req, res, next) => {
   }
 });
 
-router.post('/verify-otp', async (req, res, next) => {
+router.post('/verify-otp', requireScreenOtp, async (req, res, next) => {
   try {
     const mobile = normalizeMobile(req.body.mobile);
     const otp = String(req.body.otp || '').trim();
@@ -74,14 +96,29 @@ router.post('/verify-otp', async (req, res, next) => {
     }
 
     await Otp.deleteMany({ mobile });
-    const user = await User.findOneAndUpdate(
-      { mobile },
-      { $set: { lastLoginAt: new Date() } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    res.json(await createSession(mobile));
+  } catch (err) {
+    next(err);
+  }
+});
 
-    const token = jwt.sign({ sub: user.id, mobile }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
-    res.json({ token, user: { id: user.id, mobile } });
+// OTP_MODE=firebase: the browser does the SMS OTP with Firebase Phone Auth and sends us
+// the resulting ID token. The phone number is taken from the verified token, never the body.
+router.post('/firebase', otpLimiter, async (req, res, next) => {
+  try {
+    if (config.otpMode !== 'firebase') return res.status(404).json({ message: 'Not found' });
+
+    let decoded;
+    try {
+      decoded = await firebaseAuth().verifyIdToken(String(req.body.idToken || ''));
+    } catch {
+      return res.status(400).json({ message: 'Could not verify your number, please request a new OTP' });
+    }
+
+    const match = /^\+91(\d{10})$/.exec(decoded.phone_number || '');
+    if (!match) return res.status(400).json({ message: 'Only Indian (+91) mobile numbers can take part' });
+
+    res.json(await createSession(match[1]));
   } catch (err) {
     next(err);
   }

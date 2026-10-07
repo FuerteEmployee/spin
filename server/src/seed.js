@@ -1,16 +1,19 @@
 import Reward from './models/Reward.js';
+import { getSettings } from './services/site.js';
 
-// Order here is the clockwise order on the wheel
+// Order here is the clockwise order on the wheel. Only used when the rewards collection is empty;
+// after that, rewards are managed in the admin panel.
 export const DEFAULT_REWARDS = [
-  { label: '5% Off', wheelLabel: '5%\nOFF', icon: '🏷️', description: 'Get 5% off on your purchase.', color: '#7c3aed', weight: 30 },
-  { label: '10% Off', wheelLabel: '10%\nOFF', icon: '💸', description: 'Get 10% off on your purchase.', color: '#f59e0b', textColor: '#3b0764', weight: 22 },
-  { label: '15% Off', wheelLabel: '15%\nOFF', icon: '🔥', description: 'Get 15% off on your purchase.', color: '#ec4899', weight: 12 },
-  { label: 'Try Again', wheelLabel: 'TRY\nAGAIN', icon: '🔄', description: 'So close! Spin once more.', color: '#334155', weight: 33, isWin: false },
-  { label: 'Get 1 Month Free', wheelLabel: '1 MONTH\nFREE', icon: '🎉', description: 'Enjoy 1 month of service absolutely free.', color: '#10b981', weight: 2.5 },
-  { label: 'Get 6 Months Free', wheelLabel: '6 MONTHS\nFREE', icon: '👑', description: 'Jackpot! Enjoy 6 months of service absolutely free.', color: '#ef4444', weight: 0.5 },
+  { label: '10% OFF', wheelLabel: '10%\nOFF', icon: '🏷️', description: 'Get 10% off on your purchase.', color: '#7c3aed', weight: 30 },
+  { label: '15% OFF', wheelLabel: '15%\nOFF', icon: '✨', description: 'Get 15% off on your purchase.', color: '#ec4899', weight: 8 },
+  { label: '₹2,000 Shopping Voucher', wheelLabel: '₹2000\nVOUCHER', icon: '💎', description: 'Valid on a minimum purchase of ₹10,000.', color: '#ef4444', weight: 7 },
+  { label: '10% OFF', wheelLabel: '10%\nOFF', icon: '🏷️', description: 'Get 10% off on your purchase.', color: '#0ea5e9', weight: 30 },
+  { label: '₹1,000 Shopping Voucher', wheelLabel: '₹1000\nVOUCHER', icon: '🛍️', description: 'Valid on a minimum purchase of ₹5,000.', color: '#f59e0b', textColor: '#3b0764', weight: 15 },
+  { label: 'Festive Gift', wheelLabel: 'FESTIVE\nGIFT', icon: '🎁', description: 'Collect your festive gift from our store.', color: '#10b981', weight: 10 },
 ];
 
-export async function seedRewards() {
+export async function seed() {
+  await getSettings();
   const count = await Reward.countDocuments();
   if (count > 0) return;
   await Reward.insertMany(DEFAULT_REWARDS.map((reward, order) => ({ ...reward, order })));

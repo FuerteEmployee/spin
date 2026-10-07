@@ -56,7 +56,25 @@ h2 {
   padding: 0 16px 32px;
 }
 
-/* Background glows */
+/* Admin-uploaded background (separate images for mobile and desktop) */
+.bg-image {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--bg-mobile) center / cover no-repeat;
+  pointer-events: none;
+}
+.bg-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 4, 28, var(--bg-overlay, 0.45));
+}
+@media (min-width: 768px) {
+  .bg-image { background-image: var(--bg-desktop); }
+}
+
+/* Background glows (shown when no background image is set) */
 .bg-orbs span {
   position: fixed;
   border-radius: 50%;
@@ -121,8 +139,7 @@ h2 {
 .btn:focus-visible,
 .link:focus-visible,
 .chip:focus-visible,
-.wheel-hub:focus-visible,
-.wa-fab:focus-visible {
+.wheel-hub:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
@@ -200,6 +217,23 @@ h2 {
   max-width: 320px;
 }
 .login-hero strong { color: var(--gold); }
+
+.login-logo {
+  display: block;
+  max-width: min(220px, 60%);
+  max-height: 110px;
+  margin: 0 auto 14px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+}
+.login-hero .login-brand {
+  margin: 0 auto 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
 
 .login-badge {
   width: 84px;
@@ -333,7 +367,19 @@ h2 {
   gap: 12px;
   padding: max(16px, env(safe-area-inset-top)) 0 8px;
 }
-.brand { font-weight: 800; font-size: 1.05rem; }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+.brand img {
+  height: 32px;
+  max-width: 96px;
+  object-fit: contain;
+}
 .topbar-user { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
 .user-pill {
   padding: 4px 10px;
@@ -436,97 +482,7 @@ h2 {
 
 .btn-spin { margin-top: 28px; }
 
-/* Keep the footer clear of the floating WhatsApp button */
-.spin-page { padding-bottom: 104px; }
-
-/* My rewards */
-.my-rewards { margin-top: 28px; }
-
-.my-rewards-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.my-rewards-head h2 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-.count {
-  min-width: 26px;
-  height: 26px;
-  padding: 0 8px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--gold);
-  color: #3b0764;
-  font-size: 0.8rem;
-  font-weight: 800;
-}
-
-.btn-reset {
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-strong);
-  color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-.btn-reset:hover:not(:disabled) { border-color: var(--error); background: rgba(252, 165, 165, 0.12); }
-.btn-reset:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-reset:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-
-.win-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.win-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 12px 12px 14px;
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-.win-item.is-latest {
-  background: linear-gradient(135deg, rgba(251, 191, 36, 0.16), rgba(124, 58, 237, 0.2));
-  border-color: rgba(251, 191, 36, 0.45);
-  animation: pop-in 0.4s ease;
-}
-
-.won-icon { font-size: 1.8rem; }
-.won-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.won-text strong { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 1rem; }
-.won-code { font-size: 0.8rem; color: var(--gold); font-weight: 600; letter-spacing: 0.04em; overflow-wrap: anywhere; }
-.won-date { font-size: 0.72rem; color: var(--text-muted); }
-
-.tag {
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: rgba(251, 191, 36, 0.2);
-  color: var(--gold);
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.modal-spin-again { margin-top: 14px; font-size: 0.9rem; }
+.spin-page { padding-bottom: 8px; }
 
 .prize-list {
   list-style: none;
@@ -542,9 +498,160 @@ h2 {
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--chip) 22%, transparent);
+  background: color-mix(in srgb, var(--chip) 22%, rgba(0, 0, 0, 0.35));
   border: 1px solid color-mix(in srgb, var(--chip) 60%, transparent);
 }
+
+.notice {
+  margin: 20px 0 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  text-align: center;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  color: #fde68a;
+  font-weight: 600;
+}
+.login .notice { margin: 0 0 16px; }
+
+.page-status {
+  position: relative;
+  z-index: 1;
+  max-width: 440px;
+  margin: 0 auto;
+  padding-top: 30vh;
+  text-align: center;
+  color: var(--text-muted);
+}
+.spin-page .page-status { padding-top: 20vh; }
+
+.center { text-align: center; }
+
+/* ─── Voucher (result popup and page) ───────────────── */
+.voucher { text-align: center; }
+
+.voucher-page {
+  margin-top: 56px;
+  padding: 36px 22px 24px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(59, 19, 118, 0.92) 0%, rgba(31, 10, 69, 0.94) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  box-shadow: var(--shadow), 0 0 80px rgba(251, 191, 36, 0.15);
+  animation: pop-in 0.4s ease;
+}
+.voucher-page > .muted { margin-top: 16px; font-size: 0.82rem; }
+
+.voucher-icon {
+  width: 92px;
+  height: 92px;
+  margin: -84px auto 12px;
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fde68a, var(--gold) 50%, var(--gold-deep));
+  border: 4px solid #fff7d6;
+  box-shadow: 0 10px 30px rgba(251, 191, 36, 0.45);
+}
+.modal-retry .voucher-icon {
+  background: radial-gradient(circle at 35% 30%, #94a3b8, #475569);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.voucher-kicker {
+  margin: 0;
+  font-size: clamp(1.5rem, 7vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: linear-gradient(90deg, #fde68a, var(--gold), #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.voucher-sub {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.voucher-title {
+  margin-top: 4px;
+  font-size: clamp(1.6rem, 7.5vw, 2.1rem);
+  font-weight: 800;
+  color: var(--gold);
+  overflow-wrap: anywhere;
+}
+.voucher-desc { margin: 8px 0 0; color: var(--text-muted); }
+
+.coupon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px dashed rgba(251, 191, 36, 0.7);
+  background: rgba(0, 0, 0, 0.25);
+  text-align: left;
+}
+.coupon > div { display: flex; flex-direction: column; min-width: 0; }
+.coupon-label { font-size: 0.72rem; color: var(--text-muted); }
+.coupon-code {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
+}
+
+.voucher-note {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  color: rgba(196, 181, 253, 0.85);
+}
+.voucher-status {
+  margin: 18px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+.voucher-status.redeemed {
+  color: #bbf7d0;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+}
+.voucher-date {
+  margin: 10px 0 0;
+  font-size: 0.72rem;
+  color: rgba(196, 181, 253, 0.6);
+}
+
+/* ─── Terms & conditions ────────────────────────────── */
+.terms {
+  position: relative;
+  z-index: 1;
+  max-width: 440px;
+  margin: 36px auto 0;
+  padding: 18px 18px 14px;
+  border-radius: 16px;
+  background: rgba(10, 3, 25, 0.55);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.terms h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.terms ol {
+  margin: 0;
+  padding-left: 20px;
+  color: rgba(248, 245, 255, 0.78);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+.terms li + li { margin-top: 4px; }
 
 /* ─── Modal ─────────────────────────────────────────── */
 .modal-backdrop {
@@ -554,6 +661,7 @@ h2 {
   display: grid;
   place-items: center;
   padding: 16px;
+  overflow-y: auto;
   background: rgba(10, 3, 25, 0.72);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -564,8 +672,8 @@ h2 {
   position: relative;
   width: 100%;
   max-width: 380px;
-  padding: 36px 24px 26px;
-  text-align: center;
+  margin-top: 48px;
+  padding: 36px 24px 22px;
   border-radius: 24px;
   background: linear-gradient(180deg, #3b1376 0%, #1f0a45 100%);
   border: 1px solid rgba(251, 191, 36, 0.4);
@@ -589,115 +697,6 @@ h2 {
   cursor: pointer;
 }
 
-.modal-icon {
-  width: 92px;
-  height: 92px;
-  margin: -84px auto 12px;
-  display: grid;
-  place-items: center;
-  font-size: 48px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fde68a, var(--gold) 50%, var(--gold-deep));
-  border: 4px solid #fff7d6;
-  box-shadow: 0 10px 30px rgba(251, 191, 36, 0.45);
-}
-.modal-retry .modal-icon {
-  background: radial-gradient(circle at 35% 30%, #94a3b8, #475569);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-.modal-kicker {
-  margin: 0;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.modal-title {
-  margin-top: 4px;
-  font-size: 2rem;
-  font-weight: 800;
-  color: var(--gold);
-}
-.modal-desc { margin: 8px 0 0; color: var(--text-muted); }
-
-.coupon {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1.5px dashed rgba(251, 191, 36, 0.7);
-  background: rgba(0, 0, 0, 0.25);
-  text-align: left;
-}
-.coupon > div { display: flex; flex-direction: column; min-width: 0; }
-.coupon-label { font-size: 0.72rem; color: var(--text-muted); }
-.coupon-code {
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  overflow-wrap: anywhere;
-}
-
-.modal-note {
-  margin: 12px 0 0;
-  font-size: 0.78rem;
-  color: rgba(196, 181, 253, 0.75);
-}
-
-/* ─── WhatsApp floating button ──────────────────────── */
-.wa-fab {
-  position: fixed;
-  right: max(18px, env(safe-area-inset-right));
-  bottom: max(18px, env(safe-area-inset-bottom));
-  z-index: 800;
-  width: 62px;
-  height: 62px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--wa);
-  box-shadow: 0 10px 28px rgba(37, 211, 102, 0.5);
-  animation: fab-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-.wa-fab::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--wa);
-  z-index: -1;
-  animation: ring 2s ease-out infinite;
-}
-.wa-fab-tooltip {
-  position: absolute;
-  right: calc(100% + 12px);
-  white-space: nowrap;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: #fff;
-  color: #075e54;
-  font-size: 0.82rem;
-  font-weight: 700;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-  animation: fade-in 0.4s ease 0.6s both;
-}
-.wa-fab-tooltip::after {
-  content: '';
-  position: absolute;
-  right: -6px;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  background: #fff;
-  transform: translateY(-50%) rotate(45deg);
-}
-
 /* ─── Animations ────────────────────────────────────── */
 @keyframes blink { 50% { fill: var(--gold); opacity: 0.55; } }
 @keyframes float { 50% { transform: translateY(-8px); } }
@@ -708,8 +707,6 @@ h2 {
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes pop-in { from { opacity: 0; transform: scale(0.94); } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(30px) scale(0.85); } }
-@keyframes fab-in { from { opacity: 0; transform: scale(0.3); } }
-@keyframes ring { from { transform: scale(1); opacity: 0.6; } to { transform: scale(1.7); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -724,5 +721,4 @@ h2 {
   .phone-prefix { padding: 0 8px 0 12px; font-size: 0.9rem; }
   .otp-inputs { gap: 6px; }
   .otp-box { height: 48px; font-size: 1.2rem; }
-  .wa-fab-tooltip { display: none; }
 }

@@ -3,11 +3,12 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  // URL path the site is served from:
-  //   npm run build             -> https://spin.billingsphere.com/  (subdomain root)
-  //   npm run build:subfolder   -> https://billingsphere.com/spinandwin/
   base: '/',
   server: {
     port: 5173,
+    // The Express API (server/) runs on 5000 in development
+    proxy: {
+      '/api': 'http://localhost:5000',
+    },
   },
 });

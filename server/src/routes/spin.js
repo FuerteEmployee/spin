@@ -1,14 +1,10 @@
 import { Router } from 'express';
-import Reward from '../models/Reward.js';
 import Spin from '../models/Spin.js';
 import { requireAuth } from '../middleware/auth.js';
+import { getActiveRewards, getSettings } from '../services/site.js';
 import { generateCouponCode, pickWeighted } from '../utils/random.js';
 
 const router = Router();
-
-function getActiveRewards() {
-  return Reward.find({ active: true }).sort({ order: 1, _id: 1 });
-}
 
 function serializeSpin(spin, rewards) {
   return {
@@ -22,32 +18,15 @@ function serializeSpin(spin, rewards) {
     couponCode: spin.couponCode || null,
     wonAt: spin.createdAt,
     claimedAt: spin.claimedAt || null,
+    redeemedAt: spin.redeemedAt || null,
   };
 }
 
 function alreadyWon(res, win, rewards) {
-  return res.status(409).json({ message: 'You have already won a reward', spin: serializeSpin(win, rewards) });
+  return res
+    .status(409)
+    .json({ code: 'ALREADY_WON', message: 'This mobile number has already used its spin', spin: serializeSpin(win, rewards) });
 }
-
-// Wheel segments (weights stay on the server)
-router.get('/rewards', async (req, res, next) => {
-  try {
-    const rewards = await getActiveRewards();
-    res.json(
-      rewards.map((r) => ({
-        id: r.id,
-        label: r.label,
-        wheelLabel: r.wheelLabel,
-        icon: r.icon,
-        color: r.color,
-        textColor: r.textColor,
-        isWin: r.isWin,
-      }))
-    );
-  } catch (err) {
-    next(err);
-  }
-});
 
 // The user's winning spin, if they already have one
 router.get('/spin/me', requireAuth, async (req, res, next) => {
@@ -64,9 +43,13 @@ router.get('/spin/me', requireAuth, async (req, res, next) => {
 
 router.post('/spin', requireAuth, async (req, res, next) => {
   try {
-    const rewards = await getActiveRewards();
+    const [settings, rewards] = await Promise.all([getSettings(), getActiveRewards()]);
     const existingWin = await Spin.findOne({ user: req.user.id, isWin: true });
     if (existingWin) return alreadyWon(res, existingWin, rewards);
+
+    if (!settings.campaignActive) {
+      return res.status(403).json({ code: 'CAMPAIGN_CLOSED', message: settings.closedMessage || 'This offer has ended' });
+    }
 
     const candidates = rewards.filter((r) => r.weight > 0);
     if (candidates.length === 0) {
@@ -76,24 +59,28 @@ router.post('/spin', requireAuth, async (req, res, next) => {
     // The server decides the result; the client only animates to it
     const reward = pickWeighted(candidates);
     let spin;
-    try {
-      spin = await Spin.create({
-        user: req.user.id,
-        mobile: req.user.mobile,
-        reward: reward._id,
-        rewardLabel: reward.label,
-        rewardDescription: reward.description,
-        rewardIcon: reward.icon,
-        isWin: reward.isWin,
-        couponCode: reward.isWin ? generateCouponCode() : undefined,
-      });
-    } catch (err) {
-      // Duplicate key: a parallel request already recorded this user's win
-      if (err.code === 11000) {
-        const win = await Spin.findOne({ user: req.user.id, isWin: true });
-        if (win) return alreadyWon(res, win, rewards);
+    for (let attempt = 1; !spin; attempt++) {
+      try {
+        spin = await Spin.create({
+          user: req.user.id,
+          mobile: req.user.mobile,
+          reward: reward._id,
+          rewardLabel: reward.label,
+          rewardDescription: reward.description,
+          rewardIcon: reward.icon,
+          isWin: reward.isWin,
+          couponCode: reward.isWin ? generateCouponCode(settings.couponPrefix) : undefined,
+        });
+      } catch (err) {
+        if (err.code !== 11000) throw err;
+        // A parallel request already recorded this user's win
+        if (err.keyPattern?.user) {
+          const win = await Spin.findOne({ user: req.user.id, isWin: true });
+          if (win) return alreadyWon(res, win, rewards);
+        }
+        // Coupon code collision: try a new code
+        if (!err.keyPattern?.couponCode || attempt >= 5) throw err;
       }
-      throw err;
     }
 
     res.status(201).json({ spin: serializeSpin(spin, rewards) });
@@ -102,7 +89,7 @@ router.post('/spin', requireAuth, async (req, res, next) => {
   }
 });
 
-// Records when the user tapped "Claim on WhatsApp"
+// Records when the user tapped the WhatsApp button
 router.post('/spin/claim', requireAuth, async (req, res, next) => {
   try {
     const win = await Spin.findOne({ user: req.user.id, isWin: true });

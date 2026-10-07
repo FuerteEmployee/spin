@@ -1,7 +1,14 @@
-# Used on Apache / LiteSpeed hosting (Hostinger). nginx ignores this file.
-# The app is a single page with no client-side routes, so no rewrite rules are needed.
+# Apache / LiteSpeed (Hostinger) when the site is uploaded as static files.
 DirectoryIndex index.html
 Options -Indexes
+
+# /admin is a page of the single-page app: serve index.html for any path that isn't a real file
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
 
 <IfModule mod_headers.c>
   <FilesMatch "\.(js|css)$">

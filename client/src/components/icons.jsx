@@ -5,19 +5,3 @@ export function WhatsAppIcon({ size = 22 }) {
     </svg>
   );
 }
-
-export default function WhatsAppFab({ href, onClick }) {
-  return (
-    <a
-      className="wa-fab"
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={onClick}
-      aria-label="Claim your reward on WhatsApp"
-    >
-      <span className="wa-fab-tooltip">Claim your reward</span>
-      <WhatsAppIcon size={30} />
-    </a>
-  );
-}

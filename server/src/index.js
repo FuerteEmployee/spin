@@ -2,11 +2,11 @@ import 'dotenv/config';
 import app from './app.js';
 import config from './config/index.js';
 import { connectDB } from './config/db.js';
-import { seedRewards } from './seed.js';
+import { seed } from './seed.js';
 
 async function start() {
   await connectDB();
-  await seedRewards();
+  await seed();
   app.listen(config.port, () => console.log(`API running on http://localhost:${config.port}`));
 }
 

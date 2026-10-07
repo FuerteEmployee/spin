@@ -4,58 +4,55 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A "Spin & Win" promo page for BillingSphere. The user logs in with a mobile number (the OTP is shown on screen, no SMS is sent), spins a weighted prize wheel and claims each win through a pre-filled WhatsApp message.
+A "Scan & Win" promo for **Sadguru Selection** (sadguruselection.com, Navratri campaign). A customer scans a QR code at the stall, logs in with mobile number + OTP, gets **one spin per mobile number**, and claims the voucher via WhatsApp. Everything shown to customers (texts, T&C, rewards/odds, backgrounds, logo, WhatsApp behaviour, campaign on/off) is edited in the admin panel at `/admin`.
 
-There are two halves, and **only the client is live**:
+- `client/`: React 19 + Vite SPA. One bundle serves both the public page and `/admin` (lazy-loaded, path checked in [App.jsx](client/src/App.jsx); no router library).
+- `server/`: Express + Mongoose API on MongoDB Atlas (`spin_win` database). In production it also serves `client/dist`, so the whole app is **one Node process on one port**.
 
-- `client/` is a React 19 + Vite SPA. It is deployed as a **fully static site with no backend**. All "server" logic runs in the browser.
-- `server/` is an Express + Mongoose API that was written for a later switch to a database. **It has never been run or tested.** It is not wired to the client, and its behaviour has drifted from the client's (see below).
-
-There are no tests, no linter and no TypeScript. The git remote is `github.com/FuerteEmployee/spin` (branch `main`). The root `*.zip` files are upload bundles of `client/dist` made for hosting.
+There are no tests, no linter and no TypeScript. The git remote is `github.com/FuerteEmployee/spin` (branch `main`). The root `*.zip` files, `deploy/nginx-spinandwin.conf` and `client/public/.htaccess` are left over from the old static BillingSphere build and don't apply to this Node setup.
 
 ## Commands
 
 ```bash
-# client (the deployed app)
-cd client
-npm install
-npm run dev               # http://localhost:5173
-npm run build             # dist/ with base '/'            -> https://spin.billingsphere.com (Hostinger)
-npm run build:subfolder   # dist/ with base '/spinandwin/' -> https://billingsphere.com/spinandwin/ (nginx)
-npm run preview           # serves dist on :4173
-
-# server (not used in production yet)
-cd server
-npm install               # then copy .env.example to .env
-npm run dev               # node --watch, port 5000; seeds rewards on first start if the collection is empty
+cd server && npm install && npm run dev   # API on :5000 (node --watch); serves client/dist if it exists
+cd client && npm install && npm run dev   # :5173, proxies /api to :5000
+cd client && npm run build                # then http://localhost:5000 serves site + /admin
 ```
 
-Pick the build script that matches the deploy target, because the asset base path differs. Deployment steps are in [README.md](README.md). `client/public/.htaccess` only matters for Hostinger (Apache/LiteSpeed). The nginx variant is [deploy/nginx-spinandwin.conf](deploy/nginx-spinandwin.conf).
+On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.8,1.1.1.1` in `server/.env` (applied in [db.js](server/src/config/db.js)).
 
-## Client architecture
+## Current deployment (Hostinger, temporary until sadguruselection.com is ready)
 
-- **[client/src/config.js](client/src/config.js)** is where the business settings live: `BRAND_NAME`, `WHATSAPP_NUMBER`, OTP timings and the `REWARDS` array. Each reward has an `id`, labels, `color`, `weight` (relative odds) and `isWin`. The **array order is the clockwise segment order on the wheel**, and `rewardIndex` is derived from it, so reordering changes where the wheel lands.
-- **[client/src/services/spinService.js](client/src/services/spinService.js)** is the seam between UI and "backend". Every export is `async` and mirrors an API endpoint (the mapping is listed at the top of the file), so switching to the server only means swapping the function bodies for `fetch` calls. Components must go through this module and must not touch `localStorage` directly. In the static version:
-  - the OTP is held in a module-level `pendingOtp` variable, so it is lost on reload;
-  - the session lives in `localStorage['spinwin_session']`;
-  - wins are stored in `localStorage['spinwin_wins']` as `{ [mobile]: Spin[] }`, newest first. `readWins` also accepts the older format of a single object per mobile;
-  - "Try Again" results (`isWin: false`) are returned but not stored;
-  - errors are thrown as `ServiceError(message, code, data)`, and the UI shows `err.message`.
-- **The spin result is decided before the animation starts.** `SpinPage.handleSpin` calls `spinWheel()` first, then sets a target rotation using `spinTargetRotation()` from [SpinWheel.jsx](client/src/components/SpinWheel.jsx). The result is revealed in `handleSpinEnd`, which runs on the SVG's `transitionend`, with a `setTimeout` fallback for when that event doesn't fire. Keep that order. The wheel only animates to an outcome that already exists.
-- `SPIN_DURATION` and confetti respect `prefers-reduced-motion`.
-- [client/src/whatsapp.js](client/src/whatsapp.js) builds the `wa.me` claim link and message. A "claim" is only recorded locally, as `claimedAt`, when the link is tapped.
-- All styling is in one global file, [client/src/styles.css](client/src/styles.css). There is no CSS framework.
+- **Website:** static files on https://fuertedevelopers.com/spinandwin/, built with `npm run build:hostinger`. That uses `--base=/spinandwin/` plus `client/.env.hostinger`, which sets `VITE_API_URL` to the API and switches Firebase phone test mode off. `client/public/.htaccess` rewrites unknown paths (e.g. `/admin`) to `index.html`.
+- **API:** a Hostinger Node.js app at https://spin-api.fuertedevelopers.com (entry `src/index.js`, Node ≥ 20.19). Production env vars include `CLIENT_ORIGIN` (CORS for the website's origins) and `PUBLIC_URL`, which makes `/api/media` image links absolute because the site is on another domain.
+- **Upload packages** are built into `deploy-upload/` (gitignored): `spinandwin-website.zip`, `spinwin-api.zip` and `hostinger-env.txt` (secrets). Create the zips with Windows `tar -a`, not PowerShell 5.1 `Compress-Archive`, whose backslash paths break when unpacked on Linux.
+- After `build:hostinger`, run `npm run build` again for local use. Both builds write to the same `client/dist`.
 
-## Server architecture (dormant)
+## Configuration
 
-`src/index.js` connects to Mongo, seeds rewards and starts `app.js`. `app.js` mounts `/api/auth` (send-otp, verify-otp, JWT issuing) and `/api` (rewards, spin). If `client/dist` exists, it also serves it. The server picks rewards with `crypto` (`utils/random.js`). OTPs are stored hashed in a TTL-indexed collection.
+- `server/.env` holds the Mongo URI, `JWT_SECRET`, `ADMIN_USERNAME`/`ADMIN_PASSWORD` (the admin login, env-only), `OTP_MODE` and `FIREBASE_PROJECT_ID`. See `.env.example`.
+- `client/.env` holds the `VITE_FIREBASE_*` web config. Vite inlines these at **build time**, so rebuild after changing them. The current values belong to a **test** Firebase project (`spin-and-win-e3395`) and are meant to be replaced.
+- Both `.env` files are gitignored (`*.env`). So is the Atlas credentials file in the repo root.
 
-**Gaps you need to know about before connecting the client to it:**
+## Architecture
 
-- **One win per user** is enforced by a unique partial index on `Spin`. The client allows unlimited wins, a win list and a Reset button.
-- **Endpoint names differ.** The server has `GET /api/spin/me` (a single win) and `POST /api/spin/claim`. The service file expects `GET /api/spins/me` (a list), `POST /api/spins/:id/claim` and `DELETE /api/spins/me`. None of the client-expected endpoints exist yet.
-- **Rewards are defined twice.** The client has [config.js](client/src/config.js) (string ids such as `off5`). The server has [server/src/seed.js](server/src/seed.js) (Mongo ObjectIds, used only to seed an empty collection). Edits to odds or labels have to be made in both places.
-- **Proxy:** no Vite proxy for `/api` is configured yet.
-- **SMS:** sending is a TODO in `routes/auth.js`. `SHOW_OTP_ON_SCREEN` controls whether the OTP is returned in the response.
+**OTP modes** (`OTP_MODE`, exposed to the client as `site.otpMode`):
 
-`server/.env` exists locally and is gitignored. Don't print its contents or copy them anywhere.
+- `firebase`: [client/src/firebase.js](client/src/firebase.js) sends the SMS through Firebase Phone Auth using an invisible reCAPTCHA. The browser sends the resulting ID token to `POST /api/auth/firebase`. The server verifies it with `firebase-admin`, which only needs the project id, and takes the mobile number **from the token**. In this mode `/send-otp` and `/verify-otp` return 404, so the on-screen OTP can't be used to bypass SMS.
+- `screen`: the server generates the OTP and returns it in the response. This is for testing only: anyone can then claim any number's spin.
+
+Both modes end in `createSession()` in [routes/auth.js](server/src/routes/auth.js), which issues the app's own JWT (`role: 'user'`). Admin tokens carry `role: 'admin'`. `requireAuth` and `requireAdmin` each reject the other role.
+
+**One spin per number** is enforced by a unique partial index on `Spin {user}` where `isWin: true`. Concurrent spins resolve to the same win (409 `ALREADY_WON` with the existing spin). Rewards with `isWin: false` ("Try Again") don't create a win, so the user can spin again. The server picks the reward with `pickWeighted`, and the client only animates the wheel to `rewardIndex`. **Wheel order = reward `order`**, so the index must match `/api/site`'s reward list. The admin "Allow re-spin" action deletes a user's spins.
+
+**Dynamic content:**
+
+- A single `Settings` document (`key: 'site'`, created on demand by `getSettings()` in [services/site.js](server/src/services/site.js)) holds all texts, T&C, WhatsApp settings, coupon prefix, campaign flag and image refs. `TEXT_FIELDS` there is the whitelist and length limits for editable texts. A new text field has to be added in the model, `TEXT_FIELDS` and the admin form.
+- `GET /api/site` returns everything the public page needs. Reward **weights are never sent publicly**.
+- Rewards are saved as a whole list (`PUT /api/admin/rewards`): the server updates, adds, reorders and **deletes** to match. Spins keep a snapshot of the reward label, icon and description, so deleting a reward doesn't break past wins. `seed.js` only seeds an empty collection. Its `DEFAULT_REWARDS` also feed the admin's "Load Navratri defaults" button.
+- Images (desktop and mobile backgrounds, logo) are stored **in MongoDB** (`Media`). They're uploaded as a raw request body (`express.raw`, 6 MB limit) after the admin resizes them in the browser ([imageResize.js](client/src/admin/imageResize.js)), and served from `/api/media/:id` with immutable caching. A replaced image gets a new id.
+- On the public site, backgrounds are CSS variables on `.bg-image` ([theme.js](client/src/theme.js)): the mobile image by default and the desktop image from 768px up. If only one is uploaded, it's used for both.
+
+**WhatsApp claim** ([whatsapp.js](client/src/whatsapp.js)): `claimTarget: 'self'` opens a `wa.me` chat with the **customer's own number**. `'business'` sends to `businessWhatsapp` instead. The message is the admin's template with `{brand} {reward} {description} {code} {mobile} {date}` filled in. Tapping the button sets `claimedAt`. Staff set `redeemedAt` from the admin panel.
+
+**Client conventions:** components call the API only through `services/spinService.js` (public) and `services/adminService.js` (admin), both built on `services/api.js`. Errors are thrown as `ServiceError`, and a 401 always has code `UNAUTHORIZED`. An admin 401 dispatches `ADMIN_LOGOUT_EVENT`. Admin styles live in `admin/admin.css` (`ad-` prefix, light theme, scoped by `body.admin-body`). Public styles live in `styles.css`.

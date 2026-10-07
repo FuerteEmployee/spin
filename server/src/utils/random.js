@@ -16,10 +16,10 @@ export function safeEqual(a, b) {
 
 const COUPON_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-export function generateCouponCode() {
+export function generateCouponCode(prefix = '') {
   let code = '';
-  for (let i = 0; i < 8; i++) code += COUPON_CHARS[crypto.randomInt(COUPON_CHARS.length)];
-  return `SPIN-${code}`;
+  for (let i = 0; i < 6; i++) code += COUPON_CHARS[crypto.randomInt(COUPON_CHARS.length)];
+  return prefix ? `${prefix}-${code}` : code;
 }
 
 // Picks an item with probability proportional to its weight

@@ -1,0 +1,12 @@
+{
+  "name": "spinwin",
+  "private": true,
+  "description": "Root entry for hosts that deploy the repo root (Hostinger Node.js app from Git): installs and starts the API in server/.",
+  "scripts": {
+    "postinstall": "npm ci --prefix server --omit=dev",
+    "start": "node server/src/index.js"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
