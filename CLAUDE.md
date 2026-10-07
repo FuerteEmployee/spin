@@ -24,11 +24,11 @@ On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.
 ## Deployment (Hostinger Node.js app, https://sadguruselection.com)
 
 - **One Node app serves everything**: the site at `/`, `/admin` and the API at `/api`, same origin. It deploys from GitHub `main` using the root [package.json](package.json):
-  - `postinstall` installs `server/`;
+  - `postinstall` installs `server/` and then runs `build` (the Hostinger app's build command is fixed at `npm run postinstall` and can't be changed in hPanel);
   - `build` installs and builds `client/` (`--include=dev`, because `NODE_ENV=production` would otherwise skip Vite);
   - `start` runs `server/src/index.js`, which serves `client/dist`.
 
-  The host's build command must be `npm run build`. **Pushing to `main` and redeploying updates both the site and the API.**
+  **Pushing to `main` and redeploying updates both the site and the API.**
 - `client/.env.production` is committed: it holds the public Firebase web config and turns phone test mode off for the live build. Locally, a gitignored `client/.env.production.local` turns test mode back on for localhost.
 - Same origin means `VITE_API_URL` and `PUBLIC_URL` must stay unset in production. `CLIENT_ORIGIN` is just the site's own origins.
 - **Legacy:** the site was briefly static at fuertedevelopers.com/spinandwin, with the API at spin-api.fuertedevelopers.com (`npm run build:hostinger`, `client/.env.hostinger`). That folder now only holds a 301 redirect `.htaccess` to sadguruselection.com, for already-printed QR codes.
