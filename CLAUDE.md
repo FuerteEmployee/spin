@@ -24,7 +24,7 @@ On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.
 ## Current deployment (Hostinger, temporary until sadguruselection.com is ready)
 
 - **Website:** static files on https://fuertedevelopers.com/spinandwin/, built with `npm run build:hostinger`. That uses `--base=/spinandwin/` plus `client/.env.hostinger`, which sets `VITE_API_URL` to the API and switches Firebase phone test mode off. `client/public/.htaccess` rewrites unknown paths (e.g. `/admin`) to `index.html`.
-- **API:** a Hostinger Node.js app at https://spin-api.fuertedevelopers.com (entry `src/index.js`, Node ≥ 20.19). Production env vars include `CLIENT_ORIGIN` (CORS for the website's origins) and `PUBLIC_URL`, which makes `/api/media` image links absolute because the site is on another domain.
+- **API:** a Hostinger Node.js app at https://spin-api.fuertedevelopers.com, deployed from this GitHub repo (`main`). The root [package.json](package.json) exists for that host: its `postinstall` installs `server/` and `start` runs `server/src/index.js`. Node ≥ 20.19. Pushing to `main` updates the API; the website still has to be rebuilt and re-uploaded by hand. Production env vars include `CLIENT_ORIGIN` (CORS for the website's origins) and `PUBLIC_URL`, which makes `/api/media` image links absolute because the site is on another domain.
 - **Upload packages** are built into `deploy-upload/` (gitignored): `spinandwin-website.zip`, `spinwin-api.zip` and `hostinger-env.txt` (secrets). Create the zips with Windows `tar -a`, not PowerShell 5.1 `Compress-Archive`, whose backslash paths break when unpacked on Linux.
 - After `build:hostinger`, run `npm run build` again for local use. Both builds write to the same `client/dist`.
 
