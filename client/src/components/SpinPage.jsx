@@ -113,15 +113,15 @@ export default function SpinPage({ site, mobile, onLogout }) {
   return (
     <main className="spin-page">
       <header className="topbar">
-        <span className="brand">
-          {site.images.logo ? <img src={site.images.logo} alt="" /> : <span aria-hidden="true">🎡</span>}
-          {site.brandName}
-        </span>
+        {/* With a logo, the brand is shown as the centred logo below instead */}
+        <span className="brand">{!site.images.logo && <>🎡 {site.brandName}</>}</span>
         <div className="topbar-user">
           <span className="user-pill">+91 {mobile}</span>
           <button type="button" className="link" onClick={onLogout}>Logout</button>
         </div>
       </header>
+
+      {site.images.logo && <img className="site-logo" src={site.images.logo} alt={site.brandName} />}
 
       {loading && <p className="page-status">Loading…</p>}
 

@@ -96,12 +96,15 @@ export default function Login({ site, onLogin }) {
   return (
     <main className="login">
       <div className="login-hero">
+        {/* The logo already shows the brand name, so the text name is only used without one */}
         {site.images.logo ? (
-          <img className="login-logo" src={site.images.logo} alt={site.brandName} />
+          <img className="site-logo" src={site.images.logo} alt={site.brandName} />
         ) : (
-          <div className="login-badge" aria-hidden="true">🎡</div>
+          <>
+            <div className="login-badge" aria-hidden="true">🎡</div>
+            <p className="login-brand">{site.brandName}</p>
+          </>
         )}
-        <p className="login-brand">{site.brandName}</p>
         <h1>{site.headline}</h1>
         {site.subheadline && <p>{site.subheadline}</p>}
       </div>

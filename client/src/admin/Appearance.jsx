@@ -21,7 +21,7 @@ const SLOTS = [
     id: 'logo',
     title: 'Logo',
     hint: 'PNG with a transparent background works best. Also used as the browser tab icon.',
-    maxSize: 600,
+    maxSize: 800,
     keepAlpha: true,
   },
 ];
