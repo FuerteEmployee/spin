@@ -29,6 +29,8 @@ export default function SpinPage({ site, mobile, onLogout }) {
   const [error, setError] = useState('');
   const pendingSpin = useRef(null);
   const spinTimer = useRef(null);
+  // True from the tap until the wheel stops
+  const spinLock = useRef(false);
 
   useEffect(() => () => clearTimeout(spinTimer.current), []);
 
@@ -48,18 +50,23 @@ export default function SpinPage({ site, mobile, onLogout }) {
   }, [handleError]);
 
   async function handleSpin() {
-    if (spinning || win || rewards.length === 0) return;
+    // The lock is a ref, set before the request, so a fast double tap can't start a second
+    // request while the first is still waiting for the server (state updates aren't instant)
+    if (spinLock.current || win || rewards.length === 0) return;
+    spinLock.current = true;
+    setSpinning(true);
     setError('');
     setResult(null);
     try {
       const spin = await spinWheel();
       pendingSpin.current = spin;
-      setSpinning(true);
       setRotation((current) => spinTargetRotation(current, spin.rewardIndex, rewards.length));
       // Fallback in case transitionend never fires (e.g. tab in background)
       clearTimeout(spinTimer.current);
       spinTimer.current = setTimeout(handleSpinEnd, SPIN_DURATION + 500);
     } catch (err) {
+      spinLock.current = false;
+      setSpinning(false);
       if (err.code === 'ALREADY_WON') setWin(err.data.spin);
       else handleError(err);
     }
@@ -70,6 +77,7 @@ export default function SpinPage({ site, mobile, onLogout }) {
     const spin = pendingSpin.current;
     pendingSpin.current = null;
     if (!spin) return;
+    spinLock.current = false;
     setSpinning(false);
     trackEvent('spin', { reward: spin.label, is_win: spin.isWin });
     if (spin.isWin) celebrate();
