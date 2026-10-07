@@ -21,12 +21,18 @@ cd client && npm run build                # then http://localhost:5000 serves si
 
 On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.8,1.1.1.1` in `server/.env` (applied in [db.js](server/src/config/db.js)).
 
-## Current deployment (Hostinger, temporary until sadguruselection.com is ready)
+## Deployment (Hostinger Node.js app, https://sadguruselection.com)
 
-- **Website:** static files on https://fuertedevelopers.com/spinandwin/, built with `npm run build:hostinger`. That uses `--base=/spinandwin/` plus `client/.env.hostinger`, which sets `VITE_API_URL` to the API and switches Firebase phone test mode off. `client/public/.htaccess` rewrites unknown paths (e.g. `/admin`) to `index.html`.
-- **API:** a Hostinger Node.js app at https://spin-api.fuertedevelopers.com, deployed from this GitHub repo (`main`). The root [package.json](package.json) exists for that host: its `postinstall` installs `server/` and `start` runs `server/src/index.js`. Node ≥ 20.19. Pushing to `main` updates the API; the website still has to be rebuilt and re-uploaded by hand. Production env vars include `CLIENT_ORIGIN` (CORS for the website's origins) and `PUBLIC_URL`, which makes `/api/media` image links absolute because the site is on another domain.
-- **Upload packages** are built into `deploy-upload/` (gitignored): `spinandwin-website.zip`, `spinwin-api.zip` and `hostinger-env.txt` (secrets). Create the zips with Windows `tar -a`, not PowerShell 5.1 `Compress-Archive`, whose backslash paths break when unpacked on Linux.
-- After `build:hostinger`, run `npm run build` again for local use. Both builds write to the same `client/dist`.
+- **One Node app serves everything**: the site at `/`, `/admin` and the API at `/api`, same origin. It deploys from GitHub `main` using the root [package.json](package.json):
+  - `postinstall` installs `server/`;
+  - `build` installs and builds `client/` (`--include=dev`, because `NODE_ENV=production` would otherwise skip Vite);
+  - `start` runs `server/src/index.js`, which serves `client/dist`.
+
+  The host's build command must be `npm run build`. **Pushing to `main` and redeploying updates both the site and the API.**
+- `client/.env.production` is committed: it holds the public Firebase web config and turns phone test mode off for the live build. Locally, a gitignored `client/.env.production.local` turns test mode back on for localhost.
+- Same origin means `VITE_API_URL` and `PUBLIC_URL` must stay unset in production. `CLIENT_ORIGIN` is just the site's own origins.
+- **Legacy:** the site was briefly static at fuertedevelopers.com/spinandwin, with the API at spin-api.fuertedevelopers.com (`npm run build:hostinger`, `client/.env.hostinger`). That folder now only holds a 301 redirect `.htaccess` to sadguruselection.com, for already-printed QR codes.
+- `deploy-upload/` (gitignored) holds hand-made upload packages and `hostinger-env.txt` (secrets). Make zips with Windows `tar -a`, not PowerShell 5.1 `Compress-Archive`, whose backslash paths break on Linux.
 
 ## Configuration
 
