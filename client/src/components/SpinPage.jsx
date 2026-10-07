@@ -104,6 +104,11 @@ export default function SpinPage({ site, mobile, onLogout }) {
   }
 
   const showWheel = !loading && !win && site.campaignActive && rewards.length > 0;
+  // Voucher rewards, once per name (the wheel can repeat a reward in several segments)
+  const prizes = rewards
+    .filter((r) => r.isWin)
+    .filter((r, i, list) => list.findIndex((other) => other.label === r.label) === i);
+  const notes = prizes.filter((r) => r.showNote && r.description);
 
   return (
     <main className="spin-page">
@@ -156,15 +161,22 @@ export default function SpinPage({ site, mobile, onLogout }) {
           </button>
 
           <ul className="prize-list" aria-label="Prizes">
-            {rewards
-              .filter((r) => r.isWin)
-              .filter((r, i, list) => list.findIndex((other) => other.label === r.label) === i)
-              .map((r) => (
-                <li key={r.id} style={{ '--chip': r.color }}>
-                  <span aria-hidden="true">{r.icon}</span> {r.label}
+            {prizes.map((r) => (
+              <li key={r.id} style={{ '--chip': r.color }}>
+                <span aria-hidden="true">{r.icon}</span> {r.label}
+              </li>
+            ))}
+          </ul>
+
+          {notes.length > 0 && (
+            <ul className="prize-notes">
+              {notes.map((r) => (
+                <li key={r.id}>
+                  <strong>{r.label}:</strong> {r.description}
                 </li>
               ))}
-          </ul>
+            </ul>
+          )}
         </>
       )}
 

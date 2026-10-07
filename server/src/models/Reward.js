@@ -13,6 +13,8 @@ const rewardSchema = new mongoose.Schema(
     weight: { type: Number, required: true, min: 0 },
     // false for "Try Again" style segments: no coupon, user may spin again
     isWin: { type: Boolean, default: true },
+    // Show the description (e.g. a minimum-purchase condition) under the spin button
+    showNote: { type: Boolean, default: false },
     order: { type: Number, default: 0 },
     active: { type: Boolean, default: true },
   },

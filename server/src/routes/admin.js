@@ -253,6 +253,7 @@ function validateRewards(list) {
         textColor: item.textColor,
         weight,
         isWin: item.isWin !== false,
+        showNote: item.showNote === true,
       },
     });
   }

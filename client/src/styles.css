@@ -516,6 +516,22 @@ h2 {
   border: 1px solid color-mix(in srgb, var(--chip) 60%, transparent);
 }
 
+/* Conditions the admin chose to show (reward "showNote"), e.g. minimum purchase */
+.prize-notes {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(10, 3, 25, 0.55);
+  border: 1px dashed rgba(251, 191, 36, 0.45);
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(248, 245, 255, 0.85);
+}
+.prize-notes li + li { margin-top: 4px; }
+.prize-notes strong { color: var(--gold); font-weight: 700; }
+
 .notice {
   margin: 20px 0 0;
   padding: 14px 16px;

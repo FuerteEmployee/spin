@@ -68,6 +68,7 @@ export function publicReward(r) {
     color: r.color,
     textColor: r.textColor,
     isWin: r.isWin,
+    showNote: r.showNote,
   };
 }
 

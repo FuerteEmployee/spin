@@ -18,6 +18,7 @@ function toRow(reward) {
     textColor: reward.textColor || '#ffffff',
     weight: reward.weight ?? 10,
     isWin: reward.isWin !== false,
+    showNote: reward.showNote === true,
   };
 }
 
@@ -32,6 +33,7 @@ function toReward(row) {
     textColor: row.textColor,
     weight: Number(row.weight) || 0,
     isWin: row.isWin,
+    showNote: row.showNote,
   };
 }
 
@@ -184,6 +186,10 @@ export default function RewardsEditor() {
                   <label className="ad-check ad-span-4">
                     <input type="checkbox" checked={row.isWin} onChange={(e) => update(row.key, 'isWin', e.target.checked)} />
                     Gives a voucher. Untick for a “Try Again” segment, which lets the user spin again.
+                  </label>
+                  <label className="ad-check ad-span-4">
+                    <input type="checkbox" checked={row.showNote} onChange={(e) => update(row.key, 'showNote', e.target.checked)} />
+                    Show the description under the spin button (e.g. a minimum purchase condition)
                   </label>
                 </div>
               </section>
