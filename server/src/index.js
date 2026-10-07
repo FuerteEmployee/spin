@@ -5,9 +5,11 @@ import { connectDB } from './config/db.js';
 import { seed } from './seed.js';
 
 async function start() {
+  // Listen first: Hostinger kills apps that don't call listen() within 3 seconds, and connecting
+  // to Atlas can take longer. Mongoose queues queries from early requests until it's connected.
+  app.listen(config.port, () => console.log(`API running on http://localhost:${config.port}`));
   await connectDB();
   await seed();
-  app.listen(config.port, () => console.log(`API running on http://localhost:${config.port}`));
 }
 
 start().catch((err) => {

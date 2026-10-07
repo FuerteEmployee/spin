@@ -13,7 +13,7 @@ const app = express();
 
 // Behind nginx / a hosting proxy, so req.ip is the visitor's IP (used by the rate limiters)
 app.set('trust proxy', 1);
-app.use(cors({ origin: config.clientOrigin.split(',').map((o) => o.trim()) }));
+app.use(cors({ origin: config.clientOrigins }));
 app.use(express.json({ limit: '50kb' }));
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));

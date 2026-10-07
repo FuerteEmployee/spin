@@ -1,15 +1,19 @@
 const env = process.env;
 
+// Hosting panels make it easy to paste values with quotes or a trailing slash; ignore both
+const cleanUrl = (value) => value.trim().replace(/^["']|["']$/g, '').replace(/\/+$/, '');
+
 const config = {
   port: Number(env.PORT) || 5000,
   mongoUri: env.MONGO_URI || 'mongodb://127.0.0.1:27017/spin_win',
   dnsServers: (env.DNS_SERVERS || '').split(',').map((s) => s.trim()).filter(Boolean),
   jwtSecret: env.JWT_SECRET || 'dev-only-secret',
   jwtExpiresIn: env.JWT_EXPIRES_IN || '7d',
-  clientOrigin: env.CLIENT_ORIGIN || 'http://localhost:5173',
+  // Origins allowed to call the API from a browser (CORS), comma-separated
+  clientOrigins: (env.CLIENT_ORIGIN || 'http://localhost:5173').split(',').map(cleanUrl).filter(Boolean),
   // This server's own public URL (e.g. https://spin-api.example.com), used for image links
   // when the website is hosted on a different domain. Empty = same domain.
-  publicUrl: (env.PUBLIC_URL || '').replace(/\/+$/, ''),
+  publicUrl: cleanUrl(env.PUBLIC_URL || ''),
   // "firebase": real SMS through Firebase Phone Auth (the server only verifies Firebase ID tokens).
   // "screen": the server makes the OTP and shows it on screen (no SMS).
   otpMode: env.OTP_MODE === 'firebase' ? 'firebase' : 'screen',
