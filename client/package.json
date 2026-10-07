@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "build:hostinger": "vite build --mode hostinger --base=/spinandwin/",
-    "build:sadguru": "vite build --mode sadguru"
+    "build:sadguru": "vite build --mode sadguru --base=/spin-and-win-contest/"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

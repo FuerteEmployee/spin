@@ -23,8 +23,8 @@ On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.
 
 ## Deployment (Hostinger)
 
-- **Website:** https://sadguruselection.com, a separate Hostinger website with static files in its `public_html`.
-  - Build it with `npm run build:sadguru`, which uses `client/.env.sadguru`: `VITE_API_URL` points at the API, and phone test mode is off. The Firebase keys come from your local `client/.env`.
+- **Website:** https://sadguruselection.com/spin-and-win-contest/, static files in the `spin-and-win-contest` folder of a separate Hostinger website (the domain root is for other content).
+  - Build it with `npm run build:sadguru` (`--base=/spin-and-win-contest/`, so the admin panel is at `/spin-and-win-contest/admin`), which uses `client/.env.sadguru`: `VITE_API_URL` points at the API, and phone test mode is off. The Firebase keys come from your local `client/.env`.
   - `client/public/.htaccess` sends unknown paths (such as `/admin`) to `index.html`.
   - Every website change means rebuilding, then uploading `deploy-upload/sadguruselection-website.zip` by hand.
 - **API:** a Hostinger Node.js app at https://spin-api.fuertedevelopers.com, deployed from GitHub `main` through the root [package.json](package.json):
@@ -37,7 +37,7 @@ On Windows, if Atlas fails with `querySrv ECONNREFUSED`, set `DNS_SERVERS=8.8.8.
   - `CLIENT_ORIGIN` must list `https://sadguruselection.com` and `https://www.sadguruselection.com`;
   - `PUBLIC_URL=https://spin-api.fuertedevelopers.com`, so `/api/media` image links are absolute.
 - **Firebase config:** `client/.env.production` (committed) holds the public Firebase web config for the Node app's own build. A gitignored `client/.env.production.local` turns phone test mode back on for localhost.
-- **Legacy:** fuertedevelopers.com/spinandwin (`npm run build:hostinger`) now only holds a 301 redirect `.htaccess` to sadguruselection.com, so already-printed QR codes still work.
+- **Legacy:** fuertedevelopers.com/spinandwin (`npm run build:hostinger`) now only holds a 301 redirect `.htaccess` to sadguruselection.com/spin-and-win-contest/, so already-printed QR codes still work.
 - `deploy-upload/` (gitignored) holds hand-made upload packages and `hostinger-env.txt` (secrets). Make zips with Windows `tar -a`, not PowerShell 5.1 `Compress-Archive`, whose backslash paths break on Linux.
 
 ## Configuration
