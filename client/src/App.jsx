@@ -1,7 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { clearSession, getSite, loadSession } from './services/spinService.js';
-import { applyBranding, backgroundStyle } from './theme.js';
+import { applyBranding } from './theme.js';
 import { startAnalytics } from './firebase.js';
+import Background from './components/Background.jsx';
 import Login from './components/Login.jsx';
 import SpinPage from './components/SpinPage.jsx';
 import Terms from './components/Terms.jsx';
@@ -49,12 +50,10 @@ function PublicApp() {
     setSession(null);
   }, []);
 
-  const bg = site && backgroundStyle(site);
-
   return (
     <div className="app">
-      {bg ? (
-        <div className="bg-image" style={bg} aria-hidden="true" />
+      {site && (site.images.mobileBg || site.images.desktopBg) ? (
+        <Background mobile={site.images.mobileBg} desktop={site.images.desktopBg} overlay={site.bgOverlay} />
       ) : (
         <div className="bg-orbs" aria-hidden="true">
           <span />

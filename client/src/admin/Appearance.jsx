@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { removeImage, uploadImage } from '../services/adminService.js';
-import { backgroundStyle } from '../theme.js';
+import Background from '../components/Background.jsx';
 import { prepareImage } from './imageResize.js';
 import { SaveBar, useSettingsForm } from './useSettingsForm.jsx';
 
@@ -90,8 +90,6 @@ export default function Appearance({ settings, onSaved }) {
   const form = useSettingsForm(settings, ['bgOverlay'], onSaved);
   const overlay = Number(form.values.bgOverlay);
   const images = settings.images;
-  const mobileStyle = backgroundStyle({ images: { mobileBg: images.mobileBg || images.desktopBg }, bgOverlay: overlay });
-  const desktopStyle = backgroundStyle({ images: { mobileBg: images.desktopBg || images.mobileBg }, bgOverlay: overlay });
 
   return (
     <>
@@ -128,14 +126,14 @@ export default function Appearance({ settings, onSaved }) {
           <div className="ad-bg-previews">
             <figure>
               <div className="ad-bg-preview ad-bg-preview-mobile">
-                <div className="bg-image" style={mobileStyle} />
+                <Background mobile={images.mobileBg || images.desktopBg} overlay={overlay} />
                 <span>Scan &amp; Win</span>
               </div>
               <figcaption>Mobile</figcaption>
             </figure>
             <figure>
               <div className="ad-bg-preview ad-bg-preview-desktop">
-                <div className="bg-image" style={desktopStyle} />
+                <Background mobile={images.desktopBg || images.mobileBg} overlay={overlay} />
                 <span>Scan &amp; Win</span>
               </div>
               <figcaption>Desktop</figcaption>

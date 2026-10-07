@@ -56,22 +56,36 @@ h2 {
   padding: 0 16px 32px;
 }
 
-/* Admin-uploaded background (separate images for mobile and desktop) */
+/* Admin-uploaded background (components/Background.jsx). Plain top/left/width/height and an
+   <img> with object-fit, so it works on older phone browsers too. */
 .bg-image {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 0;
-  background: var(--bg-mobile) center / cover no-repeat;
+  overflow: hidden;
   pointer-events: none;
+  background-color: var(--bg-1);
 }
-.bg-image::after {
-  content: '';
+.bg-image picture,
+.bg-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.bg-image img {
+  object-fit: cover;
+  object-position: center;
+}
+.bg-image-overlay {
   position: absolute;
-  inset: 0;
-  background: rgba(12, 4, 28, var(--bg-overlay, 0.45));
-}
-@media (min-width: 768px) {
-  .bg-image { background-image: var(--bg-desktop); }
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgb(12, 4, 28);
 }
 
 /* Background glows (shown when no background image is set) */

@@ -462,7 +462,7 @@ a.ad-stat:hover { border-color: #c4b5fd; }
   background: #12062b;
   isolation: isolate;
 }
-.ad-bg-preview .bg-image { position: absolute; background-image: var(--bg-mobile); }
+.ad-bg-preview .bg-image { position: absolute; width: 100%; height: 100%; }
 .ad-bg-preview span { position: relative; z-index: 1; color: #fde68a; font-weight: 800; font-size: 1.1rem; }
 .ad-bg-preview-mobile { width: 140px; height: 250px; }
 .ad-bg-preview-desktop { width: 360px; height: 203px; }
