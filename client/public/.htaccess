@@ -11,6 +11,14 @@ Options -Indexes
 </IfModule>
 
 <IfModule mod_headers.c>
+  # Basic hardening: no framing by other sites (clickjacking on /admin), no MIME sniffing,
+  # HTTPS only from now on (browsers ignore this header on plain http)
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set Strict-Transport-Security "max-age=31536000"
+
   <FilesMatch "\.(js|css)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>

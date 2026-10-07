@@ -11,8 +11,20 @@ import spinRoutes from './routes/spin.js';
 
 const app = express();
 
-// Behind nginx / a hosting proxy, so req.ip is the visitor's IP (used by the rate limiters)
-app.set('trust proxy', 1);
+// Hostinger puts a CDN and a proxy in front of the app, so a fixed hop count can make every
+// visitor look like the same IP and share one rate-limit bucket (one bad actor could then
+// lock out the admin login). Trust the forwarded client IP instead. It can be spoofed, which
+// only weakens the limits; the admin password is long and random, and Firebase rate-limits SMS.
+app.set('trust proxy', true);
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set({
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+  });
+  next();
+});
 app.use(cors({ origin: config.clientOrigins }));
 app.use(express.json({ limit: '50kb' }));
 

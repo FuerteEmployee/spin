@@ -104,7 +104,8 @@ router.post('/verify-otp', requireScreenOtp, async (req, res, next) => {
 
 // OTP_MODE=firebase: the browser does the SMS OTP with Firebase Phone Auth and sends us
 // the resulting ID token. The phone number is taken from the verified token, never the body.
-router.post('/firebase', otpLimiter, async (req, res, next) => {
+// No rate limit here: the SMS step is rate-limited by Firebase, and this only checks a signed token
+router.post('/firebase', async (req, res, next) => {
   try {
     if (config.otpMode !== 'firebase') return res.status(404).json({ message: 'Not found' });
 
