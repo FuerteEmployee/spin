@@ -41,9 +41,12 @@ export default function AdminApp() {
 
   useEffect(() => {
     document.body.classList.add('admin-body');
-    document.title = 'Admin – Spin & Win';
     return () => document.body.classList.remove('admin-body');
   }, []);
+
+  useEffect(() => {
+    document.title = `Admin – ${settings?.brandName || 'Spin & Win'}`;
+  }, [settings?.brandName]);
 
   useEffect(() => {
     const onLogout = () => setToken(null);
