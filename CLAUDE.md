@@ -9,7 +9,7 @@ A "Scan & Win" promo for **Sadguru Selection** (sadguruselection.com, Navratri c
 - `client/`: React 19 + Vite SPA. One bundle serves both the public page and `/admin` (lazy-loaded, path checked in [App.jsx](client/src/App.jsx); no router library).
 - `server/`: Express + Mongoose API on MongoDB Atlas (`spin_win` database). In production it also serves `client/dist`, so the whole app is **one Node process on one port**.
 
-There are no tests, no linter and no TypeScript. The git remote is `github.com/FuerteEmployee/spin` (branch `main`). The root `*.zip` files and `deploy/nginx-spinandwin.conf` are left over from the old static BillingSphere build. The favicons in `client/public` are the Sadguru "S" emblem; `theme.js` only swaps in the uploaded logo as the tab icon when that logo is roughly square.
+There are no tests, no linter and no TypeScript. The git remote is `github.com/FuerteEmployee/spin` (branch `main`). The favicons in `client/public` are the Sadguru "S" emblem; `theme.js` only swaps in the uploaded logo as the tab icon when that logo is roughly square.
 
 ## Commands
 
