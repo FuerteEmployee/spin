@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { saveSettings } from '../services/adminService.js';
+import { useUnsavedChanges } from './unsavedChanges.js';
 
 // Local form state for a subset of the site settings. Only these fields are sent on save.
 export function useSettingsForm(settings, fields, onSaved) {
@@ -9,6 +10,7 @@ export function useSettingsForm(settings, fields, onSaved) {
   const [message, setMessage] = useState(null);
 
   const dirty = fields.some((f) => values[f] !== settings[f]);
+  useUnsavedChanges(dirty);
 
   function set(field, value) {
     setValues((v) => ({ ...v, [field]: value }));
@@ -37,7 +39,7 @@ export function useSettingsForm(settings, fields, onSaved) {
   return { values, set, bind, save, saving, message, dirty };
 }
 
-export function SaveBar({ form }) {
+export function SaveBar({ form, label = 'Save changes' }) {
   return (
     <div className="ad-savebar">
       {form.message && (
@@ -45,7 +47,7 @@ export function SaveBar({ form }) {
       )}
       {form.dirty && !form.message && <p className="ad-warning">Unsaved changes</p>}
       <button type="submit" className="ad-btn ad-btn-primary" disabled={!form.dirty || form.saving}>
-        {form.saving ? 'Saving…' : 'Save changes'}
+        {form.saving ? 'Saving…' : label}
       </button>
     </div>
   );

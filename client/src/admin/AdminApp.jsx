@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ADMIN_LOGOUT_EVENT, clearAdminToken, getSettings, loadAdminToken } from '../services/adminService.js';
 import AdminLogin from './AdminLogin.jsx';
+import { confirmLeave } from './unsavedChanges.js';
 import Dashboard from './Dashboard.jsx';
 import Participants from './Participants.jsx';
 import RewardsEditor from './RewardsEditor.jsx';
@@ -71,6 +72,7 @@ export default function AdminApp() {
   }, [token, loadSettings]);
 
   function logout() {
+    if (!confirmLeave()) return;
     clearAdminToken();
     setToken(null);
     setSettings(null);
@@ -105,7 +107,14 @@ export default function AdminApp() {
               href={`#${t.id}`}
               className={`ad-nav-item ${tab === t.id ? 'is-active' : ''}`}
               aria-current={tab === t.id ? 'page' : undefined}
-              onClick={() => setMenuOpen(false)}
+              onClick={(e) => {
+                // Switching sections discards unsaved edits, so ask first
+                if (t.id !== tab && !confirmLeave()) {
+                  e.preventDefault();
+                  return;
+                }
+                setMenuOpen(false);
+              }}
             >
               {t.label}
             </a>

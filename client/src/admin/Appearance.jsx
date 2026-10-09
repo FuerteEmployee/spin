@@ -30,14 +30,18 @@ function ImageSlot({ slot, url, onChanged }) {
   const input = useRef(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Images save on their own (no Save button), so confirm it right here
+  const [saved, setSaved] = useState('');
 
   async function upload(file) {
     if (!file) return;
     setBusy(true);
     setError('');
+    setSaved('');
     try {
       const blob = await prepareImage(file, slot);
       onChanged(await uploadImage(slot.id, blob));
+      setSaved('Saved. It is live on the site now.');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -50,8 +54,10 @@ function ImageSlot({ slot, url, onChanged }) {
     if (!window.confirm(`Remove the ${slot.title.toLowerCase()}?`)) return;
     setBusy(true);
     setError('');
+    setSaved('');
     try {
       onChanged(await removeImage(slot.id));
+      setSaved('Removed from the site.');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,6 +88,7 @@ function ImageSlot({ slot, url, onChanged }) {
         )}
       </div>
       {error && <p className="ad-error" role="alert">{error}</p>}
+      {saved && <p className="ad-success ad-slot-status" role="status">✓ {saved}</p>}
     </section>
   );
 }
@@ -97,8 +104,9 @@ export default function Appearance({ settings, onSaved }) {
         <h1>Backgrounds &amp; Logo</h1>
       </div>
       <p className="ad-muted ad-intro">
-        Uploads go live immediately. If you upload only one background, it's used on both mobile and desktop. Large photos
-        are shrunk automatically before uploading.
+        <strong>Images save automatically:</strong> uploading, replacing or removing one updates the live site straight away,
+        with no Save button needed. If you upload only one background, it's used on both mobile and desktop. Large photos are
+        shrunk automatically before uploading.
       </p>
 
       <div className="ad-image-grid">
@@ -141,7 +149,7 @@ export default function Appearance({ settings, onSaved }) {
           </div>
         )}
 
-        <SaveBar form={form} />
+        <SaveBar form={form} label="Save darkness" />
       </form>
     </>
   );

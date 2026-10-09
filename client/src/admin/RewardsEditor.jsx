@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getRewards, saveRewards } from '../services/adminService.js';
 import SpinWheel from '../components/SpinWheel.jsx';
+import { useUnsavedChanges } from './unsavedChanges.js';
 
 let nextKey = 1;
 
@@ -57,13 +58,8 @@ export default function RewardsEditor() {
 
   useEffect(load, []);
 
-  // Warn before leaving the page with unsaved changes
-  useEffect(() => {
-    if (!dirty) return;
-    const onBeforeUnload = (e) => e.preventDefault();
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [dirty]);
+  // Ask before leaving this section or the page with unsaved changes
+  useUnsavedChanges(dirty);
 
   function change(next) {
     setRows(next);
