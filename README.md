@@ -41,9 +41,38 @@ The admin login is `ADMIN_USERNAME` / `ADMIN_PASSWORD` from `server/.env`.
 
 ## Deploy
 
-The site needs Node.js 20+ hosting, because the server runs the API and serves the built site from one process. Steps:
+The project is live in two parts:
 
-1. Run `npm run build` in `client/`.
-2. Run `npm start` in `server/`, with `NODE_ENV=production`, a strong `JWT_SECRET` and the real Firebase keys.
-3. Put HTTPS in front of it, for example nginx proxying to port 5000.
-4. In MongoDB Atlas, allow the server's IP under Network Access.
+| Part | Address | Hosting | How it updates |
+|---|---|---|---|
+| **Website** (contest page + admin panel) | https://sadguruselection.com/spin-and-win-contest/ | Static files in `public_html/spin-and-win-contest` of the sadguruselection.com website on Hostinger | Build locally, upload the zip |
+| **API** (logins, spins, admin data) | https://spin-api.fuertedevelopers.com | Hostinger **Node.js app**, connected to this GitHub repo (`main`) | Push to GitHub, then click **Redeploy** |
+
+Admin panel: https://sadguruselection.com/spin-and-win-contest/admin
+
+### Updating the API (anything in `server/`)
+1. Commit and push to `main`.
+2. In hPanel, open the **spin-api.fuertedevelopers.com** Node.js app, go to **Deployments** and click **Redeploy**. It installs, builds and restarts by itself (about 1–2 minutes).
+3. Check that https://spin-api.fuertedevelopers.com/api/health shows `{"ok":true}`.
+
+### Updating the website (anything in `client/`)
+1. Build it:
+   ```bash
+   cd client
+   npm run build:sadguru      # uses client/.env.sadguru: API address, real SMS, /spin-and-win-contest/ paths
+   ```
+2. Zip the **contents** of `client/dist`, including the hidden `.htaccess`. On Windows, use `tar -a -cf site.zip -C client/dist .htaccess index.html favicon.ico favicon-192.png apple-touch-icon.png assets`. Don't use PowerShell's `Compress-Archive`: its backslash paths break on Hostinger.
+3. In File Manager (the sadguruselection.com website), open `public_html/spin-and-win-contest` and **delete everything inside**.
+4. Upload the zip, **Extract** it, then delete the zip. If the extractor won't replace `index.html`, delete it first and upload it on its own.
+5. Open the site in an incognito tab to check.
+6. Run `npm run build` again afterwards for local use. Both builds write to `client/dist`.
+
+### Settings that live outside the code
+- **API environment variables** (hPanel → Node.js app → Environment variables): `MONGO_URI`, `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `OTP_MODE=firebase`, `FIREBASE_PROJECT_ID`, `NODE_ENV=production`, and:
+  - `CLIENT_ORIGIN=https://sadguruselection.com,https://www.sadguruselection.com`
+  - `PUBLIC_URL=https://spin-api.fuertedevelopers.com`
+
+  Click **Redeploy** after changing any of them.
+- **Firebase** (project `fuerte-faidepro`): Authentication → Settings → Authorized domains must include `sadguruselection.com` and `www.sadguruselection.com`.
+- **MongoDB Atlas**: Network Access must allow the Hostinger server.
+- **Content** (texts, T&C, rewards, backgrounds, logo, WhatsApp, campaign on/off) is edited in the admin panel and needs no deploy.
